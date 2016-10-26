@@ -155,6 +155,9 @@
 {% endif %}
   "rejoin_after_leave": {{ "true" if consul_rejoin_after_leave else "false" }},
   "leave_on_terminate": {{ "true" if consul_leave_on_terminate else "false" }},
+  "performance": {
+    "raft_multiplier": {{ consul_raft_multiplier }}
+  },
   "disable_update_check": {{ "true" if consul_disable_update_check else "false" }}
 
 }
