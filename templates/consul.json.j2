@@ -145,7 +145,7 @@
 {% if consul_statsite_prefix is defined %}
   "statsite_prefix": "{{ consul_statsite_prefix }}",
 {% endif %}
-{% if consul_cors_support is defined %}
+{% if consul_cors_support %}
   "http_api_response_headers": {
         "Access-Control-Allow-Origin": "*"
   },
