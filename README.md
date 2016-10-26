@@ -113,7 +113,7 @@ consul_retry_join_wan: false
 consul_retry_interval_wan: 30s
 consul_retry_max_wan: 0
 consul_advertise_address_wan: false
-
+consul_advertise_address: "127.0.0.1" - default: `undefined`. If this variable is not defined it is not set in the config
 consul_bind_address: "0.0.0.0"
 consul_dynamic_bind: false
 consul_client_address: "127.0.0.1"
@@ -146,6 +146,7 @@ consul_dnsmasq:
 consul_node_name: "{{ inventory_hostname }}"
 consul_verify_server_hostname: false
 consul_cors_support: false
+consul_disable_update_check: false
 ```
 
 An instance might be defined through:
@@ -174,9 +175,9 @@ See [https://www.consul.io/docs/agent/encryption.html](https://www.consul.io/doc
 These files will be created on your Consul host:
 
 ```yml
-consul_cert_file: "{{ consul_home }}/cert/consul.crt",
-consul_key_file: "{{ consul_home }}/cert/consul.key",
-consul_ca_file: "{{ consul_home }}/cert/ca.crt",
+consul_cert_file: "{{ consul_home }}/cert/consul.crt"
+consul_key_file: "{{ consul_home }}/cert/consul.key"
+consul_ca_file: "{{ consul_home }}/cert/ca.crt"
 ```
 
 When you provide these vars. You should use Ansible Vault to encrypt these vars or perhaps pass them on the command line.
@@ -223,6 +224,7 @@ consul_dns_max_stale: 5s
 consul_dns_node_ttl: 0s
 consul_dns_service_ttl: 0s
 consul_dns_enable_truncate: false
+consul_udp_answer_limit: 3
 consul_dns_only_passing: false
 consul_recursors:
   - 8.8.8.8
@@ -234,6 +236,18 @@ Consul allows adding headers to the HTTP API responses, to enable [CORS](https:/
 ```yml
 consul_cors_support: true
 ```
+## Shutdown behavior
+Consul may be configured to perform (or not) cluster leave when it recieves TERM/INT signals.
+
+When service is stopped:
+ * systemd sends INT
+ * init (init.d script) sends TERM
+ * upstart sends TERM
+
+There are two variables that define if the node will attempt cluster leave when it recieves those signals:
+
+ * `consul_leave_on_terminate` defines if leave is performed when TERM is recieved. default: `false`
+ * `consul_skip_leave_on_interrupt` defines if leave is **not** performed when INT is recieved. default: `undefined`. If this variable is not defined default consul behavior (which depends on version and server/agent role) will be used.
 
 ## Handlers
 
@@ -294,6 +308,22 @@ Logs will be handled by runit and ```consul_log_file``` set to ```/dev/null``` j
     - ansible-consul
 ```
 
+## Example to register consul services
+
+```yml
+consul_services:
+  - service:
+      name: "redis localhost"
+      tags:
+        - "redis"
+      address: "127.0.0.1"
+      port: 6379
+      checks:
+        - name: "Redis health check"
+          tcp: "localhost:6379"
+          interval: "10s"
+          timeout: "1s"
+```
 
 ## Testing
 

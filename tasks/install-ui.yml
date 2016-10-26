@@ -45,7 +45,7 @@
     mode=0755
   when: consul_install_nginx_config and ansible_os_family == "Debian"
   notify:
-    - restart nginx
+    - consul reload nginx
 
 - name: consul nginx config enable
   file: >
@@ -57,7 +57,7 @@
     mode=0755
   when: consul_is_ui and consul_enable_nginx_config and ansible_os_family == "Debian"
   notify:
-  - restart nginx
+  - consul reload nginx
 
 - name: consul nginx config
   template: >
@@ -67,7 +67,15 @@
     group=root
     mode=0755
   when: consul_is_ui and consul_install_nginx_config and ansible_os_family == "RedHat"
+  notify:
+    - consul reload nginx
+
+- name: Install python module to manage selinux
+  package:
+    name: libsemanage-python
+    state: present
+  when: consul_is_ui and consul_install_nginx_config and ansible_os_family == "RedHat"
 
 - name: allow nginx to connect to consul (selinux)
   seboolean: name=httpd_can_network_connect state=yes persistent=yes
-  when: consul_is_ui and consul_install_nginx_config and ansible_selinux
+  when: consul_is_ui and consul_install_nginx_config and ansible_selinux.status == "enabled"

@@ -40,6 +40,7 @@
   group: >
     name={{consul_group}}
     state=present
+    system=yes
   register: consul_group_created
 
 - name: create consul user
@@ -56,6 +57,7 @@
     path={{ item }}
     owner={{consul_user}}
     group={{consul_group}}
+    mode=0755
   with_items:
     - "{{ consul_home }}"
     - "{{ consul_home }}/bin"
@@ -100,6 +102,8 @@
     owner={{consul_user}}
     group={{consul_group}}
     mode=0600
+  notify:
+    - "{{ consul_restart_handler }}"
   when: consul_tls_key is defined
 
 - name: create TLS cert
@@ -110,6 +114,8 @@
     owner={{consul_user}}
     group={{consul_group}}
     mode=0600
+  notify:
+    - "{{ consul_restart_handler }}"
   when: consul_tls_cert is defined
 
 - name: create TLS root CA cert
@@ -120,6 +126,8 @@
     owner={{consul_user}}
     group={{consul_group}}
     mode=0600
+  notify:
+    - "{{ consul_restart_handler }}"
   when: consul_tls_ca_cert is defined
 
 - name: set ownership
@@ -138,7 +146,7 @@
     owner=root
     group=root
     mode=0644
-  when: consul_use_upstart and ansible_os_family == "Debian"
+  when: consul_use_upstart
   notify:
     - "{{ consul_restart_handler }}"
 
@@ -192,4 +200,11 @@
     - "{{ consul_restart_handler }}"
 
 - name: add CONSUL_RPC_ADDR to .bashrc
-  lineinfile: dest="{{ consul_home }}/.bashrc" insertbefore=BOF regexp='^export CONSUL_RPC_ADDR' line='export CONSUL_RPC_ADDR="{{ consul_client_address }}:{{ consul_port_rpc }}"' create=yes
+  lineinfile: >
+    dest={{ consul_home }}/.bashrc
+    insertbefore=BOF 
+    regexp='^export CONSUL_RPC_ADDR' 
+    line='export CONSUL_RPC_ADDR="{{ consul_client_address }}:{{ consul_port_rpc }}"' 
+    create=yes
+    owner={{consul_user}}
+    group={{consul_group}}
